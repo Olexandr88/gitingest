@@ -5,4 +5,4 @@ from gitingest.entrypoint import ingest, ingest_async
 from gitingest.ingestion import ingest_query
 from gitingest.query_parsing import parse_query
 
-__all__ = ["ingest_query", "clone_repo", "parse_query", "ingest", "ingest_async"]
+__all__ = ["clone_repo", "ingest", "ingest_async", "ingest_query", "parse_query"]

@@ -1,8 +1,9 @@
-"""This module contains the dataclasses for the ingestion process."""
+"""Module containing the dataclasses for the ingestion process."""
+
+from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Optional, Set
+from pathlib import Path  # noqa: TC003 (typing-only-standard-library-import) needed for type checking (pydantic)
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,8 +12,7 @@ from gitingest.config import MAX_FILE_SIZE
 
 @dataclass
 class CloneConfig:
-    """
-    Configuration for cloning a Git repository.
+    """Configuration for cloning a Git repository.
 
     This class holds the necessary parameters for cloning a repository to a local path, including
     the repository's URL, the target local path, and optional parameters for a specific commit or branch.
@@ -23,48 +23,78 @@ class CloneConfig:
         The URL of the Git repository to clone.
     local_path : str
         The local directory where the repository will be cloned.
-    commit : str, optional
-        The specific commit hash to check out after cloning (default is None).
-    branch : str, optional
-        The branch to clone (default is None).
+    commit : str | None
+        The specific commit hash to check out after cloning.
+    branch : str | None
+        The branch to clone.
     subpath : str
-        The subpath to clone from the repository (default is "/").
+        The subpath to clone from the repository (default: ``"/"``).
     blob: bool
-        Whether the repository is a blob (default is False).
+        Whether the repository is a blob (default: ``False``).
+
     """
 
     url: str
     local_path: str
-    commit: Optional[str] = None
-    branch: Optional[str] = None
+    commit: str | None = None
+    branch: str | None = None
     subpath: str = "/"
     blob: bool = False
 
 
 class IngestionQuery(BaseModel):  # pylint: disable=too-many-instance-attributes
-    """
-    Pydantic model to store the parsed details of the repository or file path.
+    """Pydantic model to store the parsed details of the repository or file path.
+
+    Attributes
+    ----------
+    user_name : str | None
+        The username or owner of the repository.
+    repo_name : str | None
+        The name of the repository.
+    local_path : Path
+        The local path to the repository or file.
+    url : str | None
+        The URL of the repository.
+    slug : str
+        The slug of the repository.
+    id : str
+        The ID of the repository.
+    subpath : str
+        The subpath to the repository or file (default: ``"/"``).
+    type : str | None
+        The type of the repository or file.
+    branch : str | None
+        The branch of the repository.
+    commit : str | None
+        The commit of the repository.
+    max_file_size : int
+        The maximum file size to ingest (default: 10 MB).
+    ignore_patterns : set[str]
+        The patterns to ignore (default: ``set()``).
+    include_patterns : set[str] | None
+        The patterns to include.
+    model_config : ConfigDict
+        The configuration for the model.
+
     """
 
-    user_name: Optional[str] = None
-    repo_name: Optional[str] = None
+    user_name: str | None = None
+    repo_name: str | None = None
     local_path: Path
-    url: Optional[str] = None
+    url: str | None = None
     slug: str
     id: str
     subpath: str = "/"
-    type: Optional[str] = None
-    branch: Optional[str] = None
-    commit: Optional[str] = None
+    type: str | None = None
+    branch: str | None = None
+    commit: str | None = None
     max_file_size: int = Field(default=MAX_FILE_SIZE)
-    ignore_patterns: Optional[Set[str]] = None
-    include_patterns: Optional[Set[str]] = None
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    ignore_patterns: set[str] = set()  # TODO: ignore_patterns and include_patterns have the same type
+    include_patterns: set[str] | None = None
+    model_config: ConfigDict = ConfigDict(arbitrary_types_allowed=True)
 
     def extract_clone_config(self) -> CloneConfig:
-        """
-        Extract the relevant fields for the CloneConfig object.
+        """Extract the relevant fields for the CloneConfig object.
 
         Returns
         -------
@@ -74,10 +104,12 @@ class IngestionQuery(BaseModel):  # pylint: disable=too-many-instance-attributes
         Raises
         ------
         ValueError
-            If the 'url' parameter is not provided.
+            If the `url` parameter is not provided.
+
         """
         if not self.url:
-            raise ValueError("The 'url' parameter is required.")
+            msg = "The 'url' parameter is required."
+            raise ValueError(msg)
 
         return CloneConfig(
             url=self.url,

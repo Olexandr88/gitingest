@@ -5,10 +5,13 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from pathlib import Path
+from typing import TYPE_CHECKING
 
-from gitingest.utils.file_utils import get_preferred_encodings, is_text_file
+from gitingest.utils.file_utils import _decodes, _read_chunk, get_preferred_encodings, is_text_file
 from gitingest.utils.notebook_utils import process_notebook
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 SEPARATOR = "=" * 48  # Tiktoken, the tokenizer openai uses, counts 2 tokens if we have more than 48
 
@@ -32,8 +35,7 @@ class FileSystemStats:
 
 @dataclass
 class FileSystemNode:  # pylint: disable=too-many-instance-attributes
-    """
-    Class representing a node in the file system (either a file or directory).
+    """Class representing a node in the file system (either a file or directory).
 
     Tracks properties of files/directories for comprehensive analysis.
     """
@@ -49,8 +51,7 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
     children: list[FileSystemNode] = field(default_factory=list)
 
     def sort_children(self) -> None:
-        """
-        Sort the children nodes of a directory according to a specific order.
+        """Sort the children nodes of a directory according to a specific order.
 
         Order of sorting:
           2. Regular files (not starting with dot)
@@ -64,9 +65,11 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
         ------
         ValueError
             If the node is not a directory.
+
         """
         if self.type != FileSystemNodeType.DIRECTORY:
-            raise ValueError("Cannot sort children of a non-directory node")
+            msg = "Cannot sort children of a non-directory node"
+            raise ValueError(msg)
 
         def _sort_key(child: FileSystemNode) -> tuple[int, str]:
             # returns the priority order for the sort function, 0 is first
@@ -82,13 +85,13 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
 
     @property
     def content_string(self) -> str:
-        """
-        Return the content of the node as a string, including path and content.
+        """Return the content of the node as a string, including path and content.
 
         Returns
         -------
         str
             A string representation of the node's content.
+
         """
         parts = [
             SEPARATOR,
@@ -102,8 +105,7 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
 
     @property
     def content(self) -> str:  # pylint: disable=too-many-return-statements
-        """
-        Read the content of a file if it's text (or a notebook). Return an error message otherwise.
+        """Return file content (if text / notebook) or an explanatory placeholder.
 
         Returns
         -------
@@ -114,9 +116,11 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
         ------
         ValueError
             If the node is a directory.
+
         """
         if self.type == FileSystemNodeType.DIRECTORY:
-            raise ValueError("Cannot read content of a directory node")
+            msg = "Cannot read content of a directory node"
+            raise ValueError(msg)
 
         if self.type == FileSystemNodeType.SYMLINK:
             return ""
@@ -124,22 +128,28 @@ class FileSystemNode:  # pylint: disable=too-many-instance-attributes
         if not is_text_file(self.path):
             return "[Non-text file]"
 
-        if self.path.suffix == ".ipynb":
+        if self.path.suffix == ".ipynb":  # Notebook
             try:
                 return process_notebook(self.path)
             except Exception as exc:
                 return f"Error processing notebook: {exc}"
 
-        # Try multiple encodings
-        for encoding in get_preferred_encodings():
-            try:
-                with self.path.open(encoding=encoding) as f:
-                    return f.read()
-            except UnicodeDecodeError:
-                continue
-            except UnicodeError:
-                continue
-            except OSError as exc:
-                return f"Error reading file: {exc}"
+        # Plain-text file
+        chunk = _read_chunk(self.path)
+        if chunk is None:
+            return "Error reading file"
 
-        return "Error: Unable to decode file with available encodings"
+        # Find the first encoding that decodes the sample
+        good_enc: str | None = next(
+            (enc for enc in get_preferred_encodings() if _decodes(chunk, enc)),
+            None,
+        )
+
+        if good_enc is None:
+            return "Error: Unable to decode file with available encodings"
+
+        try:
+            with self.path.open(encoding=good_enc) as fp:
+                return fp.read()
+        except OSError as exc:
+            return f"Error reading file: {exc}"

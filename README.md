@@ -1,13 +1,16 @@
 # Gitingest
 
-[![Image](./docs/frontpage.png "Gitingest main page")](https://gitingest.com)
+[![Gitingest banner](./docs/frontpage.png)](https://gitingest.com)
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/cyclotruc/gitingest/blob/main/LICENSE)
-[![PyPI version](https://badge.fury.io/py/gitingest.svg)](https://badge.fury.io/py/gitingest)
-[![GitHub stars](https://img.shields.io/github/stars/cyclotruc/gitingest?style=social.svg)](https://github.com/cyclotruc/gitingest)
+[![PyPI](https://img.shields.io/pypi/v/gitingest.svg)](https://pypi.org/project/gitingest)
 [![Downloads](https://pepy.tech/badge/gitingest)](https://pepy.tech/project/gitingest)
+[![CI](https://github.com/cyclotruc/gitingest/workflows/CI/badge.svg)](https://github.com/cyclotruc/gitingest/actions)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![License](https://img.shields.io/github/license/cyclotruc/gitingest.svg)](https://github.com/cyclotruc/gitingest/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/cyclotruc/gitingest?style=social.svg)](https://github.com/cyclotruc/gitingest)
+[![Discord](https://img.shields.io/badge/Discord-Join_chat-%235865F2?logo=discord&logoColor=white)](https://discord.com/invite/zerRaGK9EC)
 
-[![Discord](https://dcbadge.limes.pink/api/server/https://discord.com/invite/zerRaGK9EC)](https://discord.com/invite/zerRaGK9EC)
+[![Trendshift badge](https://trendshift.io/api/badge/repositories/13519)](https://trendshift.io/repositories/13519)
 
 Turn any Git repository into a prompt-friendly text ingest for LLMs.
 
